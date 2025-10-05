@@ -20,6 +20,7 @@ namespace NetSdrClientApp.Networking
 
         public event EventHandler<byte[]>? MessageReceived;
 
+        [ExcludeFromCodeCoverage]
         public UdpClientWrapper(int port)
         {
             _localEndPoint = new IPEndPoint(IPAddress.Any, port);
@@ -86,6 +87,7 @@ namespace NetSdrClientApp.Networking
             }
         }
 
+        [ExcludeFromCodeCoverage]
         public override int GetHashCode()
         {
             var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
@@ -96,6 +98,7 @@ namespace NetSdrClientApp.Networking
             return BitConverter.ToInt32(hash, 0);
         }
 
+        [ExcludeFromCodeCoverage]
         public override bool Equals(object? obj)
         {
             if (ReferenceEquals(this, obj))
