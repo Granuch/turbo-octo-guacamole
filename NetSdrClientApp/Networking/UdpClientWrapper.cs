@@ -1,11 +1,13 @@
 ﻿using NetSdrClientApp.Networking;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace NetSdrClientApp.Networking
 {
@@ -23,6 +25,7 @@ namespace NetSdrClientApp.Networking
             _localEndPoint = new IPEndPoint(IPAddress.Any, port);
         }
 
+        [ExcludeFromCodeCoverage]
         public async Task StartListeningAsync()
         {
             _cts = new CancellationTokenSource();
@@ -53,6 +56,7 @@ namespace NetSdrClientApp.Networking
             }
         }
 
+        [ExcludeFromCodeCoverage]
         public void StopListening()
         {
             try
@@ -67,6 +71,7 @@ namespace NetSdrClientApp.Networking
             }
         }
 
+        [ExcludeFromCodeCoverage]
         public void Exit()
         {
             try
