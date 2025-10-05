@@ -50,6 +50,10 @@ namespace NetSdrClientApp.Networking
             {
                 Console.WriteLine($"Failed to connect: {ex.Message}");
             }
+            finally
+            {
+                _cts?.Dispose();
+            }
         }
 
         public void Disconnect()
