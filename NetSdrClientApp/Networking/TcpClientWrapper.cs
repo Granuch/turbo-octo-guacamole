@@ -79,11 +79,11 @@ namespace NetSdrClientApp.Networking
         }
 
         [ExcludeFromCodeCoverage]
-        public async Task SendMessageAsync(byte[] data)
+        private async Task SendInternalAsync(byte[] data)
         {
             if (Connected && _stream != null && _stream.CanWrite)
             {
-                Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
+                Console.WriteLine($"Message sent: " + string.Join(" ", data.Select(b => b.ToString("X2"))));
                 await _stream.WriteAsync(data, 0, data.Length);
             }
             else
@@ -93,19 +93,15 @@ namespace NetSdrClientApp.Networking
         }
 
         [ExcludeFromCodeCoverage]
-        public async Task SendMessageAsync(string str)
+        public Task SendMessageAsync(byte[] data) => SendInternalAsync(data);
+
+        [ExcludeFromCodeCoverage]
+        public Task SendMessageAsync(string str)
         {
             var data = Encoding.UTF8.GetBytes(str);
-            if (Connected && _stream != null && _stream.CanWrite)
-            {
-                Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
-                await _stream.WriteAsync(data, 0, data.Length);
-            }
-            else
-            {
-                throw new InvalidOperationException("Not connected to a server.");
-            }
+            return SendInternalAsync(data);
         }
+
 
         [ExcludeFromCodeCoverage]
         private async Task StartListeningAsync()

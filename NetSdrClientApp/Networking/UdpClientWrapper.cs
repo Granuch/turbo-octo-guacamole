@@ -57,8 +57,7 @@ namespace NetSdrClientApp.Networking
             }
         }
 
-        [ExcludeFromCodeCoverage]
-        public void StopListening()
+        private void StopListeningInternal()
         {
             try
             {
@@ -73,19 +72,10 @@ namespace NetSdrClientApp.Networking
         }
 
         [ExcludeFromCodeCoverage]
-        public void Exit()
-        {
-            try
-            {
-                _cts?.Cancel();
-                _udpClient?.Close();
-                Console.WriteLine("Stopped listening for UDP messages.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error while stopping: {ex.Message}");
-            }
-        }
+        public void StopListening() => StopListeningInternal();
+
+        [ExcludeFromCodeCoverage]
+        public void Exit() => StopListeningInternal();
 
         [ExcludeFromCodeCoverage]
         public override int GetHashCode()
