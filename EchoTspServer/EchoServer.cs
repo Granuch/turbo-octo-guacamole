@@ -31,6 +31,7 @@ namespace TestServerApp
             _clientFactory = clientFactory;
         }
 
+
         public async Task StartAsync()
         {
             _cancellationTokenSource = new CancellationTokenSource();
