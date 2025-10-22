@@ -13,6 +13,7 @@ namespace TestServerApp
         private readonly UdpClient _udpClient;
         private Timer? _timer;
         private ushort _sequenceNumber;
+        private static readonly Random _rnd = new Random();
 
         public UdpTimedSender(string host, int port)
         {
@@ -33,10 +34,12 @@ namespace TestServerApp
         private void SendMessageCallback(object? state)
         {
             try
-            {
-                Random rnd = new Random();
+            {             
                 byte[] samples = new byte[1024];
-                rnd.NextBytes(samples);
+                lock (_rnd) // Random не потокобезопасен
+                {
+                    _rnd.NextBytes(samples);
+                }
                 _sequenceNumber++;
 
                 byte[] msg = (new byte[] { 0x04, 0x84 })
