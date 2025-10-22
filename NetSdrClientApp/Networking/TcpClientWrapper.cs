@@ -29,7 +29,6 @@ namespace NetSdrClientApp.Networking
             _port = port;
         }
 
-        [ExcludeFromCodeCoverage]
         public void Connect()
         {
             if (Connected)
@@ -58,7 +57,6 @@ namespace NetSdrClientApp.Networking
             }
         }
 
-        [ExcludeFromCodeCoverage]
         public void Disconnect()
         {
             if (Connected)
@@ -78,7 +76,6 @@ namespace NetSdrClientApp.Networking
             }
         }
 
-        [ExcludeFromCodeCoverage]
         private async Task SendInternalAsync(byte[] data)
         {
             if (Connected && _stream != null && _stream.CanWrite)
@@ -92,10 +89,8 @@ namespace NetSdrClientApp.Networking
             }
         }
 
-        [ExcludeFromCodeCoverage]
         public Task SendMessageAsync(byte[] data) => SendInternalAsync(data);
 
-        [ExcludeFromCodeCoverage]
         public Task SendMessageAsync(string str)
         {
             var data = Encoding.UTF8.GetBytes(str);
@@ -103,7 +98,6 @@ namespace NetSdrClientApp.Networking
         }
 
 
-        [ExcludeFromCodeCoverage]
         private async Task StartListeningAsync()
         {
             if (Connected && _stream != null && _stream.CanRead)

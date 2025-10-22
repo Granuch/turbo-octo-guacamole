@@ -20,13 +20,11 @@ namespace NetSdrClientApp.Networking
 
         public event EventHandler<byte[]>? MessageReceived;
 
-        [ExcludeFromCodeCoverage]
         public UdpClientWrapper(int port)
         {
             _localEndPoint = new IPEndPoint(IPAddress.Any, port);
         }
 
-        [ExcludeFromCodeCoverage]
         public async Task StartListeningAsync()
         {
             _cts = new CancellationTokenSource();
@@ -71,13 +69,10 @@ namespace NetSdrClientApp.Networking
             }
         }
 
-        [ExcludeFromCodeCoverage]
         public void StopListening() => StopListeningInternal();
 
-        [ExcludeFromCodeCoverage]
         public void Exit() => StopListeningInternal();
 
-        [ExcludeFromCodeCoverage]
         public override int GetHashCode()
         {
             var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
@@ -88,7 +83,6 @@ namespace NetSdrClientApp.Networking
             return BitConverter.ToInt32(hash, 0);
         }
 
-        [ExcludeFromCodeCoverage]
         public override bool Equals(object? obj)
         {
             if (ReferenceEquals(this, obj))
