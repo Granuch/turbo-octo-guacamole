@@ -59,7 +59,7 @@ jobs:
           /k:"Granuch_turbo-octo-guacamole" `
           /o:"granuch" `
           /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-          /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" `
+          /d:sonar.cs.opencover.reportsPaths="TestResults/NetSdrClientApp.coverage.xml,TestResults/EchoServer.coverage.xml" `
           /d:sonar.cpd.cs.minimumTokens=40 `
           /d:sonar.cpd.cs.minimumLines=5 `
           /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml `
@@ -72,38 +72,23 @@ jobs:
         run: dotnet build NetSdrClient.sln -c Release --no-restore
       - name: Tests with coverage (OpenCover)
         run: |
-          # Создаём папку для результатов
-          mkdir TestResults
+          New-Item -ItemType Directory -Force -Path "$PWD\TestResults" | Out-Null
       
           # NetSdrClientApp
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
-            /p:CoverletOutput=TestResults/NetSdrClientApp.coverage.xml `
+            /p:CoverletOutput="$PWD\TestResults\NetSdrClientApp.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            /p:Exclude="[*Tests]*"
-          
+            /p:Exclude="[EchoServer]*"
+      
           # EchoServer
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
-            /p:CoverletOutput=TestResults/EchoServer.coverage.xml `
+            /p:CoverletOutput="$PWD\TestResults\EchoServer.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
             /p:Exclude="[*Tests]*"
         shell: pwsh
-      
-      - name: Merge coverage reports
-        run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
-      
-          reportgenerator `
-            "-reports:TestResults/NetSdrClientApp.coverage.xml;TestResults/EchoServer.coverage.xml" `
-            "-targetdir:TestResults/CombinedReport" `
-            -reporttypes:Xml
-      
-          # Копируем финальный coverage.xml в корень TestResults
-          Copy-Item "TestResults/CombinedReport/Summary.xml" "TestResults/coverage.xml" -Force
-        shell: pwsh
-
+        
       # 3) END: SonarScanner
       - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
