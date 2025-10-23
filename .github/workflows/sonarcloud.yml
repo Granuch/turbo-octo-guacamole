@@ -72,7 +72,7 @@ jobs:
         run: dotnet build NetSdrClient.sln -c Release --no-restore
       - name: Tests with coverage (OpenCover)
         run: |
-          # Создаём папку для результатов
+          # Створюємо папку для результатів
           New-Item -ItemType Directory -Force -Path "$PWD\TestResults" | Out-Null
       
           # NetSdrClientApp
@@ -80,15 +80,15 @@ jobs:
             /p:CollectCoverage=true `
             /p:CoverletOutput="$PWD\TestResults\NetSdrClientApp.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            /p:Exclude="EchoServer*;*Tests*"
-
-          
+            /p:ExcludeByFile="**/EchoServer/**" `
+            /p:Exclude="[EchoServer*]*,[*Tests]*"
+      
           # EchoServer
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput="$PWD\TestResults\EchoServer.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            /p:Exclude="[*Tests*]*"
+            /p:Exclude="[*Tests]*"
         shell: pwsh
 
       
