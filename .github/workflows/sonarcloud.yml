@@ -88,22 +88,7 @@ jobs:
             /p:CoverletOutputFormat=opencover `
             /p:Exclude="[*Tests]*"
         shell: pwsh
-
-      
-      - name: Merge coverage reports
-        run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
-      
-          reportgenerator `
-            "-reports:$PWD\TestResults\NetSdrClientApp.coverage.xml;$PWD\TestResults\EchoServer.coverage.xml" `
-            "-targetdir:$PWD\TestResults\CombinedReport" `
-            -reporttypes:Xml
-      
-          Copy-Item "$PWD\TestResults\CombinedReport\Summary.xml" "$PWD\TestResults\coverage.xml" -Force
-        shell: pwsh
-
-
+        
       # 3) END: SonarScanner
       - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
