@@ -80,7 +80,7 @@ jobs:
             /p:CollectCoverage=true `
             /p:CoverletOutput="$PWD\TestResults\NetSdrClientApp.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            /p:Exclude="[EchoServer*]*,[*Tests]*"
+            /p:Exclude="[EchoServer*]*,[*Tests*]*"
       
           # EchoServer
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
