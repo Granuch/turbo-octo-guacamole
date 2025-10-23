@@ -72,31 +72,38 @@ jobs:
         run: dotnet build NetSdrClient.sln -c Release --no-restore
       - name: Tests with coverage (OpenCover)
         run: |
-          # 1) Тесты NetSdrClientAppTests
+          # Создаём папку для результатов
+          mkdir TestResults
+      
+          # NetSdrClientApp
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput=TestResults/NetSdrClientApp.coverage.xml `
             /p:CoverletOutputFormat=opencover `
             /p:Exclude="[*Tests]*"
           
-          # 2) Тесты EchoServerTests
+          # EchoServer
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput=TestResults/EchoServer.coverage.xml `
             /p:CoverletOutputFormat=opencover `
             /p:Exclude="[*Tests]*"
-
-          # 3) Объединяем два покрытия в один файл coverage.xml для SonarCloud
+        shell: pwsh
+      
+      - name: Merge coverage reports
+        run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+      
           reportgenerator `
             "-reports:TestResults/NetSdrClientApp.coverage.xml;TestResults/EchoServer.coverage.xml" `
             "-targetdir:TestResults/CombinedReport" `
             -reporttypes:Xml
-
-          # 4) Переименовываем Summary.xml в coverage.xml
+      
+          # Копируем финальный coverage.xml в корень TestResults
           Copy-Item "TestResults/CombinedReport/Summary.xml" "TestResults/coverage.xml" -Force
         shell: pwsh
+
       # 3) END: SonarScanner
       - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
