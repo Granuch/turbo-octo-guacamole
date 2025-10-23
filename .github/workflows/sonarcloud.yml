@@ -73,22 +73,23 @@ jobs:
       - name: Tests with coverage (OpenCover)
         run: |
           # Создаём папку для результатов
-          mkdir TestResults
+          New-Item -ItemType Directory -Force -Path "$PWD\TestResults" | Out-Null
       
           # NetSdrClientApp
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
-            /p:CoverletOutput=TestResults/NetSdrClientApp.coverage.xml `
+            /p:CoverletOutput="$PWD\TestResults\NetSdrClientApp.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
             /p:Exclude="[*Tests]*"
-          
+      
           # EchoServer
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
-            /p:CoverletOutput=TestResults/EchoServer.coverage.xml `
+            /p:CoverletOutput="$PWD\TestResults\EchoServer.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
             /p:Exclude="[*Tests]*"
         shell: pwsh
+
       
       - name: Merge coverage reports
         run: |
@@ -96,13 +97,13 @@ jobs:
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
       
           reportgenerator `
-            "-reports:TestResults/NetSdrClientApp.coverage.xml;TestResults/EchoServer.coverage.xml" `
-            "-targetdir:TestResults/CombinedReport" `
+            "-reports:$PWD\TestResults\NetSdrClientApp.coverage.xml;$PWD\TestResults\EchoServer.coverage.xml" `
+            "-targetdir:$PWD\TestResults\CombinedReport" `
             -reporttypes:Xml
       
-          # Копируем финальный coverage.xml в корень TestResults
-          Copy-Item "TestResults/CombinedReport/Summary.xml" "TestResults/coverage.xml" -Force
+          Copy-Item "$PWD\TestResults\CombinedReport\Summary.xml" "$PWD\TestResults\coverage.xml" -Force
         shell: pwsh
+
 
       # 3) END: SonarScanner
       - name: SonarScanner End
