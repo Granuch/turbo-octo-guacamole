@@ -1,6 +1,7 @@
 ﻿using Moq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using TestServerApp;
 
 namespace EchoServerTests
@@ -213,6 +214,25 @@ namespace EchoServerTests
             // Assert
             _mockStream.Verify(s => s.WriteAsync(It.IsAny<byte[]>(), 0, input.Length, It.IsAny<CancellationToken>()), Times.Once);
             _mockClient.Verify(c => c.Close(), Times.Once);
+        }
+
+        [Test]
+        public async Task ShouldCreateEchoServerAndStart()
+        {
+            var server = new EchoServer(5001);
+            var startTask = server.StartAsync();
+            await Task.Delay(100); // дати стартанути
+
+            Assert.That(startTask, Is.Not.Null);
+            server.Stop();
+        }
+
+        [Test]
+        public void UdpTimedSender_ShouldStartAndStop()
+        {
+            using var sender = new UdpTimedSender("127.0.0.1", 60001);
+            Assert.DoesNotThrow(() => sender.StartSending(100));
+            Assert.DoesNotThrow(() => sender.StopSending());
         }
 
     }

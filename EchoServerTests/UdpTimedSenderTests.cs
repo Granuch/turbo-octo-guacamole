@@ -1,4 +1,5 @@
-﻿using TestServerApp;
+﻿using System.Net.Sockets;
+using TestServerApp;
 
 namespace EchoServerTests
 {
@@ -157,6 +158,40 @@ namespace EchoServerTests
             ushort seq = (ushort)(field!.GetValue(sender) ?? 0);
 
             Assert.That(seq, Is.GreaterThanOrEqualTo(2));
+        }
+
+        [Test]
+        public void TcpClientWrapper_Dispose_ShouldNotThrow()
+        {
+            // Arrange
+            using var tcpClient = new TcpClient();
+            var wrapper = new TcpClientWrapper(tcpClient);
+
+            // Act + Assert
+            Assert.DoesNotThrow(() => wrapper.Dispose());
+        }
+
+        [Test]
+        public void NetworkStreamWrapper_Dispose_ShouldNotThrow()
+        {
+            // Arrange: создаем реальное подключение к локальному TCP-серверу, чтобы получить валидный NetworkStream
+            using var tcpClient = new TcpClient();
+
+            // Поднимаем локальный слушатель на случайном свободном порту
+            var listener = new TcpListener(System.Net.IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+
+            // Соединяемся клиентом и принимаем соединение на сервере
+            tcpClient.Connect(System.Net.IPAddress.Loopback, port);
+            using var serverSide = listener.AcceptTcpClient();
+            listener.Stop();
+
+            using var stream = tcpClient.GetStream();
+            var wrapper = new NetworkStreamWrapper(stream);
+
+            // Act + Assert
+            Assert.DoesNotThrow(() => wrapper.Dispose());
         }
 
     }
