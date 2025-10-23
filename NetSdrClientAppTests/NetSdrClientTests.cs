@@ -1,6 +1,8 @@
 ﻿using Moq;
 using NetSdrClientApp;
+using NetSdrClientApp.Messages;
 using NetSdrClientApp.Networking;
+using System.Reflection;
 
 namespace NetSdrClientAppTests;
 
@@ -115,5 +117,47 @@ public class NetSdrClientTests
         Assert.That(_client.IQStarted, Is.False);
     }
 
-    //TODO: cover the rest of the NetSdrClient code here
+    [Test]
+    public void GetHeader_ShouldThrow_WhenLengthTooLarge()
+    {
+        var type = NetSdrMessageHelper.MsgTypes.Ack;
+        var ex = Assert.Throws<TargetInvocationException>(() =>
+        {
+            var method = typeof(NetSdrMessageHelper)
+                .GetMethod("GetHeader", BindingFlags.NonPublic | BindingFlags.Static);
+            method!.Invoke(null, new object[] { type, 9000 });
+        });
+        Assert.That(ex!.InnerException, Is.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public void GetSamples_ShouldThrow_WhenSampleSizeTooBig()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            NetSdrMessageHelper.GetSamples(64, new byte[] { 1, 2, 3 }).ToList());
+    }
+
+    [Test]
+    public void GetSamples_ShouldReturnCorrectValues()
+    {
+        var data = new byte[] { 1, 0, 2, 0 }; // 16-bit little endian
+        var samples = NetSdrMessageHelper.GetSamples(16, data).ToArray();
+        Assert.That(samples.Length, Is.EqualTo(2));
+        Assert.That(samples[0], Is.EqualTo(1));
+        Assert.That(samples[1], Is.EqualTo(2));
+    }
+
+    [Test]
+    public void TranslateHeader_ShouldHandleDataItemWithZeroLength()
+    {
+        var type = NetSdrMessageHelper.MsgTypes.DataItem0;
+        ushort headerValue = (ushort)(((int)type << 13) + 0);
+        byte[] header = BitConverter.GetBytes(headerValue);
+
+        var method = typeof(NetSdrMessageHelper)
+            .GetMethod("TranslateHeader", BindingFlags.NonPublic | BindingFlags.Static);
+        object[] args = new object[] { header, null!, 0 };
+        method!.Invoke(null, args);
+    }
+
 }

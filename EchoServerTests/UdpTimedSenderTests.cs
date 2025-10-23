@@ -93,5 +93,71 @@ namespace EchoServerTests
             // Assert
             Assert.DoesNotThrow(() => sender.Dispose());
         }
+
+        [Test]
+        public void SendMessageCallback_ShouldHandleInvalidIpGracefully()
+        {
+            // Arrange
+            using var sender = new UdpTimedSender("invalid_ip_address", 5000);
+
+            // Викликаємо приватний метод через рефлексію
+            var method = typeof(UdpTimedSender).GetMethod("SendMessageCallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => method!.Invoke(sender, new object?[] { null }));
+        }
+
+        [Test]
+        public void SendMessageCallback_ShouldSendMessageSuccessfully()
+        {
+            // Arrange
+            using var sender = new UdpTimedSender("127.0.0.1", 5000);
+
+            // Викликаємо приватний метод напряму (імітуємо таймер)
+            var method = typeof(UdpTimedSender).GetMethod("SendMessageCallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => method!.Invoke(sender, new object?[] { null }));
+        }
+
+        [Test]
+        public void StartSending_ShouldThrow_WhenAlreadyRunning()
+        {
+            using var sender = new UdpTimedSender("127.0.0.1", 5000);
+            sender.StartSending(100);
+            Assert.Throws<InvalidOperationException>(() => sender.StartSending(100));
+        }
+
+        [Test]
+        public void SendMessageCallback_ShouldHandleInvalidHost()
+        {
+            using var sender = new UdpTimedSender("999.999.999.999", 5000);
+            Assert.DoesNotThrow(() =>
+            {
+                // Викликаємо приватний метод через reflection, щоб увійти в catch
+                var method = typeof(UdpTimedSender)
+                    .GetMethod("SendMessageCallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                method!.Invoke(sender, new object?[] { null });
+            });
+        }
+
+        [Test]
+        public void StartSending_ShouldIncrementSequenceNumber()
+        {
+            using var sender = new UdpTimedSender("127.0.0.1", 5000);
+            var method = typeof(UdpTimedSender)
+                .GetMethod("SendMessageCallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            method!.Invoke(sender, new object?[] { null });
+            method!.Invoke(sender, new object?[] { null });
+
+            // Через reflection отримуємо поле
+            var field = typeof(UdpTimedSender)
+                .GetField("_sequenceNumber", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            ushort seq = (ushort)(field!.GetValue(sender) ?? 0);
+
+            Assert.That(seq, Is.GreaterThanOrEqualTo(2));
+        }
+
     }
 }

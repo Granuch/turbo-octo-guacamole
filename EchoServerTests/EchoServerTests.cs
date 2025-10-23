@@ -142,5 +142,78 @@ namespace EchoServerTests
             // Act & Assert
             Assert.DoesNotThrow(() => new EchoServer(5000));
         }
+
+        [Test]
+        public async Task StartAsync_ShouldHandleObjectDisposedExceptionGracefully()
+        {
+            // Arrange
+            _mockListener.Setup(l => l.Start());
+            _mockListener
+                .SetupSequence(l => l.AcceptTcpClientAsync())
+                .ThrowsAsync(new ObjectDisposedException("Listener disposed"));
+
+            _server = new EchoServer(
+                5000,
+                (addr, port) => _mockListener.Object,
+                (client) => _mockClient.Object);
+
+            // Act
+            var startTask = _server.StartAsync();
+            await Task.Delay(50);
+            _server.Stop();
+            await startTask;
+
+            // Assert
+            _mockListener.Verify(l => l.Start(), Times.Once);
+            _mockListener.Verify(l => l.Stop(), Times.Once);
+        }
+
+        [Test]
+        public async Task HandleClientAsync_ShouldNotCatchOperationCanceledException()
+        {
+            // Arrange
+            _mockStream
+                .Setup(s => s.ReadAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new OperationCanceledException());
+
+            _server = new EchoServer(
+                5000,
+                (addr, port) => _mockListener.Object,
+                (client) => _mockClient.Object);
+
+            // Act
+            await _server.HandleClientAsync(_mockClient.Object, _cts.Token);
+
+            // Assert
+            _mockClient.Verify(c => c.Close(), Times.Once);
+        }
+
+        [Test]
+        public async Task HandleClientAsync_ShouldEchoDataBackToClient()
+        {
+            // Arrange
+            byte[] input = new byte[] { 1, 2, 3, 4 };
+            _mockStream
+                .SetupSequence(s => s.ReadAsync(It.IsAny<byte[]>(), 0, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(input.Length)
+                .ReturnsAsync(0); // завершення циклу
+
+            _mockStream
+                .Setup(s => s.WriteAsync(It.IsAny<byte[]>(), 0, input.Length, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _server = new EchoServer(
+                5000,
+                (addr, port) => _mockListener.Object,
+                (client) => _mockClient.Object);
+
+            // Act
+            await _server.HandleClientAsync(_mockClient.Object, CancellationToken.None);
+
+            // Assert
+            _mockStream.Verify(s => s.WriteAsync(It.IsAny<byte[]>(), 0, input.Length, It.IsAny<CancellationToken>()), Times.Once);
+            _mockClient.Verify(c => c.Close(), Times.Once);
+        }
+
     }
 }
