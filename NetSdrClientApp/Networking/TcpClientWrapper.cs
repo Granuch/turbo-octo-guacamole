@@ -19,7 +19,8 @@ namespace NetSdrClientApp.Networking
         private NetworkStream? _stream;
         private CancellationTokenSource _cts;
 
-        public bool Connected => _tcpClient != null && _tcpClient.Connected && _stream != null;
+        // Consider connection established if we have an active stream that can read/write
+        public bool Connected => _stream != null && (_stream.CanRead || _stream.CanWrite);
 
         public event EventHandler<byte[]>? MessageReceived;
 
@@ -50,9 +51,6 @@ namespace NetSdrClientApp.Networking
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to connect: {ex.Message}");
-            }
-            finally
-            {
                 _cts?.Dispose();
             }
         }
