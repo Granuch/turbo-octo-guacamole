@@ -74,19 +74,22 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "$PWD\TestResults" | Out-Null
       
+          $excludeApp = '[EchoServer]*,[*Tests]*,[*.Tests]*'
+          $excludeServer = '[*Tests]*,[*.Tests]*'
+      
           # NetSdrClientApp
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput="$PWD\TestResults\NetSdrClientApp.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            "/p:Exclude=[EchoServer]*,[*Tests]*,[*.Tests]*"
+            /p:Exclude=$excludeApp
       
           # EchoServer
           dotnet test EchoServerTests/EchoServerTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
             /p:CoverletOutput="$PWD\TestResults\EchoServer.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            "/p:Exclude=[*Tests]*,[*.Tests]*"
+            /p:Exclude=$excludeServer
         shell: pwsh
 
       
