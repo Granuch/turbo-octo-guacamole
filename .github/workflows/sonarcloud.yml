@@ -72,6 +72,9 @@ jobs:
         run: dotnet build NetSdrClient.sln -c Release --no-restore
       - name: Tests with coverage (OpenCover)
         run: |
+          # Создаём папку для результатов
+          mkdir TestResults
+      
           # NetSdrClientApp
           dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
             /p:CollectCoverage=true `
@@ -86,17 +89,21 @@ jobs:
             /p:CoverletOutputFormat=opencover `
             /p:Exclude="[*Tests]*"
         shell: pwsh
-
+      
       - name: Merge coverage reports
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+      
           reportgenerator `
             "-reports:TestResults/NetSdrClientApp.coverage.xml;TestResults/EchoServer.coverage.xml" `
             "-targetdir:TestResults/CombinedReport" `
             -reporttypes:Xml
+      
+          # Копируем финальный coverage.xml в корень TestResults
           Copy-Item "TestResults/CombinedReport/Summary.xml" "TestResults/coverage.xml" -Force
         shell: pwsh
+
       # 3) END: SonarScanner
       - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
