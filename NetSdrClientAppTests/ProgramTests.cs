@@ -269,6 +269,7 @@ namespace NetSdrClientAppTests
         }
     }
 
+
     // Інтерфейс для мокування NetSdrClient
     public interface INetSdrClient
     {
