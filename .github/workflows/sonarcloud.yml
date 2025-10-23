@@ -80,7 +80,7 @@ jobs:
             /p:CollectCoverage=true `
             /p:CoverletOutput="$PWD\TestResults\NetSdrClientApp.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            /p:Exclude="EchoServer*,*Tests*"
+            /p:Exclude="EchoServer*;*Tests*"
 
           
           # EchoServer
@@ -88,7 +88,7 @@ jobs:
             /p:CollectCoverage=true `
             /p:CoverletOutput="$PWD\TestResults\EchoServer.coverage.xml" `
             /p:CoverletOutputFormat=opencover `
-            /p:Exclude="*Tests*"
+            /p:Exclude="[*Tests*]*"
         shell: pwsh
 
       
