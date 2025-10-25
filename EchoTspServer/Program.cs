@@ -7,28 +7,30 @@ namespace TestServerApp
     {
         public static async Task Main(string[] args)
         {
-            EchoServer server = new EchoServer(5000);
-
-            _ = Task.Run(() => server.StartAsync());
-
             string host = "127.0.0.1";
             int port = 60000;
             int intervalMilliseconds = 5000;
 
-            using (var sender = new UdpTimedSender(host, port))
+            await Run(new EchoServer(5000), new UdpTimedSender(host, port), new SystemConsole(), intervalMilliseconds);
+        }
+
+        public static async Task Run(EchoServer server, UdpTimedSender sender, IConsole console, int intervalMilliseconds)
+        {
+            _ = Task.Run(() => server.StartAsync());
+
+            console.WriteLine("Press any key to stop sending...");
+            sender.StartSending(intervalMilliseconds);
+
+            console.WriteLine("Press 'q' to quit...");
+            while (console.ReadKey(intercept: true).Key != ConsoleKey.Q)
             {
-                Console.WriteLine("Press any key to stop sending...");
-                sender.StartSending(intervalMilliseconds);
-
-                Console.WriteLine("Press 'q' to quit...");
-                while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q)
-                {
-                }
-
-                sender.StopSending();
-                server.Stop();
-                Console.WriteLine("Sender stopped.");
             }
+
+            sender.StopSending();
+            server.Stop();
+            console.WriteLine("Sender stopped.");
+
+            await Task.CompletedTask;
         }
     }
 }
