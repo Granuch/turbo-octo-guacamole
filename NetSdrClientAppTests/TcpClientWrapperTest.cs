@@ -216,4 +216,106 @@ public class MemoryStreamNetworkStream : NetworkStream
         base.Dispose(disposing);
         try { _serverSocket?.Dispose(); } catch { }
     }
+
+    [TestFixture]
+    public class TcpWrapperTests
+    {
+        private TcpClientWrapper _client;
+        private Mock<Stream> _mockStream;
+        private CancellationTokenSource _cts;
+
+        [SetUp]
+        public void Setup()
+        {
+            _client = (TcpClientWrapper)Activator.CreateInstance(
+                typeof(TcpClientWrapper),
+                new object[] { "localhost", 5000 }
+            )!;
+
+            _mockStream = new Mock<Stream>();
+            _cts = new CancellationTokenSource();
+
+            // Приватні поля встановлюємо через рефлексію
+            typeof(TcpClientWrapper).GetField("_stream", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(_client, _mockStream.Object);
+            typeof(TcpClientWrapper).GetField("_cts", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(_client, _cts);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _cts?.Dispose();
+        }
+        [Test]
+        public void StartListeningAsync_ShouldThrow_WhenNotConnected()
+        {
+            // Arrange
+            typeof(TcpClientWrapper).GetField("_stream", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(_client, null);
+
+            // Act + Assert
+            Assert.ThrowsAsync<InvalidOperationException>(() =>
+                InvokePrivateAsync(_client, "StartListeningAsync"));
+        }
+
+        [Test]
+        public async Task StartListeningAsync_ShouldInvokeMessageReceived_WhenBytesRead()
+        {
+            // Arrange
+            var data = new byte[] { 0x01, 0x02, 0x03 };
+            int callCount = 0;
+
+            _mockStream.Setup(s => s.CanRead).Returns(true);
+            _mockStream.SetupSequence(s => s.ReadAsync(It.IsAny<byte[]>(), 0, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(data.Length)
+                       .ReturnsAsync(0); // break loop
+
+            _client.MessageReceived += (sender, bytes) =>
+            {
+                callCount++;
+                Assert.AreEqual(data.Length, bytes.Length);
+            };
+
+            // Act
+            var task = InvokePrivateAsync(_client, "StartListeningAsync");
+            await Task.Delay(100);
+            _cts.Cancel();
+            await task;
+
+            // Assert
+            Assert.That(callCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task StartListeningAsync_ShouldHandleOperationCanceledException()
+        {
+            // Arrange
+            _mockStream.Setup(s => s.CanRead).Returns(true);
+            _mockStream.Setup(s => s.ReadAsync(It.IsAny<byte[]>(), 0, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(new OperationCanceledException());
+
+            // Act + Assert
+            await InvokePrivateAsync(_client, "StartListeningAsync");
+        }
+
+        [Test]
+        public async Task StartListeningAsync_ShouldHandleGeneralException()
+        {
+            // Arrange
+            _mockStream.Setup(s => s.CanRead).Returns(true);
+            _mockStream.Setup(s => s.ReadAsync(It.IsAny<byte[]>(), 0, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(new IOException("Simulated error"));
+
+            // Act + Assert
+            await InvokePrivateAsync(_client, "StartListeningAsync");
+        }
+
+        private static Task InvokePrivateAsync(object obj, string methodName)
+        {
+            var method = obj.GetType().GetMethod(methodName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            return (Task)method.Invoke(obj, null);
+        }
+    }
 }
