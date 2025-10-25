@@ -16,8 +16,9 @@ namespace NetSdrClientApp.Networking
         private string _host;
         private int _port;
         private TcpClient? _tcpClient;
-        private NetworkStream? _stream;
+        private Stream? _stream;
         private CancellationTokenSource _cts;
+
 
         // Consider connection established if we have an active stream that can read/write
         public bool Connected => _stream != null && (_stream.CanRead || _stream.CanWrite);

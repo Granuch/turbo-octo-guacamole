@@ -1,10 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Moq;
 using NetSdrClientApp.Networking;
 using NUnit.Framework;
+using System;
+using System.IO;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace NetSdrClientAppTests;
 
@@ -13,7 +15,36 @@ public class TcpClientWrapperTests
 {
     private const string Host = "localhost";
     private const int Port = 5000;
+    private Mock<NetworkStream> _mockStream;
+    private TcpClientWrapper _client;
 
+    [SetUp]
+    public void Setup()
+    {
+        _mockStream = new Mock<NetworkStream>();
+        _client = new TcpClientWrapper("localhost", 1234);
+    }
+
+    [Test]
+    public void Connected_ReturnsFalse_WhenStreamIsNull()
+    {
+        Assert.IsFalse(_client.Connected);
+    }
+
+
+    [Test]
+    public void StartListeningAsync_Throws_WhenNotConnected()
+    {
+        // stream = null => Connected = false
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            var method = typeof(TcpClientWrapper).GetMethod("StartListeningAsync",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            await (Task)method.Invoke(_client, null);
+        });
+    }
+
+    
     [Test]
     public void Constructor_ShouldInitializeHostAndPort()
     {
