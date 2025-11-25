@@ -16,7 +16,7 @@ namespace NetSdrClientApp.Networking
         private string _host;
         private int _port;
         private TcpClient? _tcpClient;
-        private Stream? _stream;
+        private NetworkStream? _stream;
         private CancellationTokenSource _cts;
 
 
